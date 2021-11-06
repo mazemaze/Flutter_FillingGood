@@ -32,14 +32,14 @@ class _HomeScreenState extends State<HomeScreen>
   late String currentGoal;
   late int currentGoalAmount;
   late AnimationController _controller;
-  double padValue = 1;
+  int padValue = 1;
   void initData() async {
     SharedPreferences pref = await SharedPreferences.getInstance();
     setState(() {
       currentAmount = pref.getInt("amount") ?? 0;
       currentGoal = pref.getString("goal") ?? "未設定";
       currentGoalAmount = pref.getInt("goalAmount") ?? 0;
-      padValue = (currentAmount / currentGoalAmount) * 10;
+      padValue = ((currentAmount / currentGoalAmount) * 10).toInt();
       print(padValue);
     });
   }
@@ -335,7 +335,6 @@ class _MyFillingContainerState extends State<MyFillingContainer>
                     alignment: Alignment.bottomCenter,
                     child: Container(
                       height: widget.size! * widget.progress!,
-                      color: widget.progressColor,
                     ),
                   ),
                   AnimatedBuilder(
