@@ -110,16 +110,20 @@ class _HomeScreenState extends State<HomeScreen>
               ],
             ),
           ),
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Container(
-              alignment: Alignment.center,
-              width: MediaQuery.of(context).size.width.toDouble(),
-              height: myBanner.size.height.toDouble(),
-              child: AdWidget(ad: myBanner),
-            ),
-          ),
+          _buildAdMobBanner(context),
         ],
+      ),
+    );
+  }
+
+  Align _buildAdMobBanner(BuildContext context) {
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Container(
+        alignment: Alignment.center,
+        width: MediaQuery.of(context).size.width.toDouble(),
+        height: myBanner.size.height.toDouble(),
+        child: AdWidget(ad: myBanner),
       ),
     );
   }

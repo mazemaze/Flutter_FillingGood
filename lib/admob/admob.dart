@@ -6,10 +6,8 @@ class AdMobService {
   String? getBannerAdUnitId() {
     if (Platform.isAndroid) {
       return 'ca-app-pub-3940256099942544/6300978111';
-      // 'ca-app-pub-9406495332982701/6614142752';
     } else if (Platform.isIOS) {
       return 'ca-app-pub-3940256099942544/2934735716';
-      //'ca-app-pub-9406495332982701/1006592856';
     }
     return null;
   }
