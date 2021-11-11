@@ -179,7 +179,6 @@ class _HomeScreenState extends State<HomeScreen>
                     });
                     await setCurrentAmount();
                     amount.text = "";
-                    print(currentAmount >= currentGoalAmount);
                     if (currentAmount >= currentGoalAmount) {
                       Navigator.of(context).pop();
                       showDialog(
