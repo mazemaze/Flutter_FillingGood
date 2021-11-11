@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:help_me_save/admob/admob.dart';
 import 'package:help_me_save/screens/animated_background.dart';
+import 'package:help_me_save/screens/circle_progress.dart';
 import 'package:help_me_save/utils/color.dart';
 import 'dart:math';
 
@@ -32,6 +33,7 @@ class _HomeScreenState extends State<HomeScreen>
   late String currentGoal;
   late int currentGoalAmount;
   late AnimationController _controller;
+  bool isSucceed = false;
   int padValue = 1;
   void initData() async {
     SharedPreferences pref = await SharedPreferences.getInstance();
@@ -39,8 +41,36 @@ class _HomeScreenState extends State<HomeScreen>
       currentAmount = pref.getInt("amount") ?? 0;
       currentGoal = pref.getString("goal") ?? "未設定";
       currentGoalAmount = pref.getInt("goalAmount") ?? 0;
-      padValue = ((currentAmount / currentGoalAmount) * 10).toInt();
-      print(padValue);
+      final value = ((currentAmount / currentGoalAmount) * 100).toInt();
+      padValue = value.isNaN ? 0 : value;
+    });
+  }
+
+  void checkIfGoalisSatisfied() {
+    if (currentAmount > currentGoalAmount) {
+      setState(() {
+        isSucceed = true;
+      });
+    }
+  }
+
+  void resetAllSettings() {
+    LocalStorageService service = LocalStorageService();
+    setState(() {
+      service.saveNewGoal("未設定");
+      service.setToNewGoalAmount(0);
+      service.resetAmount();
+      padValue = 0;
+    });
+    initData();
+  }
+
+  Future setCurrentAmount() async {
+    SharedPreferences pref = await SharedPreferences.getInstance();
+    setState(() {
+      currentAmount = pref.getInt("amount") ?? 0;
+      final value = ((currentAmount / currentGoalAmount) * 100).toInt();
+      padValue = value.isNaN ? 0 : value;
     });
   }
 
@@ -54,7 +84,6 @@ class _HomeScreenState extends State<HomeScreen>
       duration: Duration(seconds: 2),
       reverseDuration: Duration(seconds: 2),
     );
-    print(_controller.status);
     _controller
       ..addListener(() {
         setState(() {});
@@ -135,27 +164,93 @@ class _HomeScreenState extends State<HomeScreen>
         margin: EdgeInsets.symmetric(vertical: 16),
         width: 200,
         height: 200,
-        child: MyFillingContainer(
-          amount: "$currentAmount",
-          progress: padValue / 10,
-          size: 200,
-          backgroundColor: Colors.black,
-          progressColor: Colors.blue,
-          function: () => showDialog(
-            context: context,
-            builder: (_) => _buildInputDialog(context, () {
-              LocalStorageService().addAmount(
-                currentAmount,
-                int.parse(
-                  amount.text,
+        child: GestureDetector(
+            onTap: () => showDialog(
+                  context: context,
+                  builder: (_) => _buildInputDialog(context, () async {
+                    setState(() {
+                      LocalStorageService().addAmount(
+                        currentAmount,
+                        int.parse(
+                          amount.text,
+                        ),
+                      );
+                      checkIfGoalisSatisfied();
+                    });
+                    await setCurrentAmount();
+                    amount.text = "";
+                    print(currentAmount >= currentGoalAmount);
+                    if (currentAmount >= currentGoalAmount) {
+                      Navigator.of(context).pop();
+                      showDialog(
+                        context: context,
+                        builder: (_) => SimpleDialog(
+                          backgroundColor: oxfordBlue,
+                          title: Text(
+                            "おめでとうございます！\n目標達成です！",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white,
+                            ),
+                          ),
+                          children: [
+                            Container(
+                              width: MediaQuery.of(context).size.width,
+                              margin:
+                                  EdgeInsets.only(left: 16, right: 16, top: 16),
+                              decoration: BoxDecoration(
+                                color: oxfordBlue.shade900,
+                                borderRadius: BorderRadius.circular(40),
+                              ),
+                              child: TextButton(
+                                onPressed: () {
+                                  setState(() {
+                                    resetAllSettings();
+                                  });
+                                  Navigator.of(context).pop();
+                                },
+                                child: Text(
+                                  "リセットする",
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    } else {
+                      Navigator.of(context).pop();
+                    }
+                    isSucceed = false;
+                  }, amount, "貯金額を入力", TextInputType.number),
                 ),
-              );
-              initData();
-              amount.text = "";
-              Navigator.of(context).pop();
-            }, amount, "貯金額を入力", TextInputType.number),
-          ),
-        ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                WaveProgress(180.0, Colors.black, Colors.blueAccent.shade700,
+                    padValue.toDouble()),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      ("現在：¥${currentAmount}"),
+                      style: TextStyle(
+                        color: Colors.grey[200],
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      ("タップして貯金額追加"),
+                      style: TextStyle(
+                        color: Colors.grey[200],
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            )),
       ),
       builder: (context, child) => Transform.translate(
         offset: Offset(_controller.value * 2, _controller.value * 10),
@@ -338,6 +433,7 @@ class _MyFillingContainerState extends State<MyFillingContainer>
                   Align(
                     alignment: Alignment.bottomCenter,
                     child: Container(
+                      color: Colors.blue,
                       height: widget.size! * widget.progress!,
                     ),
                   ),
